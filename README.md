@@ -1,41 +1,26 @@
-# ThreadTest
+# ThreadWrangler
 
-A crudely implemented tool for playing with thread affinity (not process affinity) for testing thread behaviour, mostly with respect to AMD Ryzen Windows Schedular 'scandal' and it's behaviour with respect to threads being randomly scheduled across all CCX's.
+A crudely implemented tool for playing with thread affinity (not process affinity) for testing thread behaviour.
 
 Needs to be ran as Administrator and probably should avoid using it against Games which have anticheat as how this would be seen is unknown, however there is no process executable modification or injection involved.
 
-Project files are Visual Studio 2015, pre-compiled binaries are availible in Win32 and x64 folders.
+Project files are Visual Studio 2017, pre-compiled binaries are availible in x64 folder.
 
-```text
-Thread Affinity Thingi
 
-Sorting: (optional)
-   -sortbythreadid          Sort threads by Thread ID.
-   -sortbywalltime          Sort threads by thread wall time.
+# Configuration
 
-Output: (optional)
-   -showdormant             Include threads that are dormant in output.
-   -showsleeping            Include threads that are sleeping in output.
-   -showall                 Include all threads in output.
+Add a process by clcking the gear, whilst a file selection window opens you only need to enter an executable name.
 
-Behaviour: (optional)
-   -switchevery <value>     Move domain every <value> threads.
-   -domains <value>         Number of CPU domains to emulate.
-   -realcoresonly           Allocate to only every second logical core.
-   -cores                   Override the number of cores detected, must be even.
-   -lockdeadthreadsto       Lock threads that are dormant to a specific logical core, 0-based.
 
-Target: (required)
-   -process <value>         Name of the running executable file to target, ie. "calc.exe"
-```
+Disabling "Ideal Thread Mode" and "Affinity Mode" will effectively allow one to monitor only.
 
-Examples:
-- Emulate XXXX | XXXX (2 domains) on a 8 core processor, lock every other thread to opposite domain.
-```text
-ThreadTest.exe -process "DOOMx64vk.exe" -domains 2 -cores 8 -showsleeping
-```
+ITC = Ideal Thread Candidate
+DTC = Dorment Thread Candidate
+Excl = Exclude
 
-- Emulate XXXXXXXX | XXXXXXXX (2 domains) on a 16 core processor, lock every other thread to opposite domain.
-```text
-ThreadTest.exe -process "DOOMx64vk.exe" -domains 2 -cores 16 -realcoresonly -sortbywalltime -showsleeping
-```
+It would be recommended to leave these enabled except for testing purposes as they are crudely implemented.
+
+Thread Allocation
+User Time (Sticky) = Try to re-assign the same threads to the same affinities and groups.
+User Time (Blind) = Blindly re-allocate the threads every second.
+
