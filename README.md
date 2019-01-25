@@ -15,12 +15,17 @@ Add a process by clcking the gear, whilst a file selection window opens you only
 Disabling "Ideal Thread Mode" and "Affinity Mode" will effectively allow one to monitor only.
 
 ITC = Ideal Thread Candidate
+
 DTC = Dorment Thread Candidate
+
 Excl = Exclude
+
 
 It would be recommended to leave these enabled except for testing purposes as they are crudely implemented.
 
-Thread Allocation
+# Thread Allocation
+
 User Time (Sticky) = Try to re-assign the same threads to the same affinities and groups.
+
 User Time (Blind) = Blindly re-allocate the threads every second.
 
