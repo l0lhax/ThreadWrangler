@@ -82,6 +82,7 @@ private:
 	HFONT _HeaderFont;
 
 	HWND CB_Algorithm;
+	HWND CB_CoresPerThread;
 
 	Config::ProcessConfigPtr _TargetConfig;
 
@@ -89,6 +90,8 @@ private:
 	static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	void SetSortAlgorithm(Algorithms::TSAlgorithm ThreadSortAlg);
+
+	void SetCoresPerThread(uint32_t CoresPerThread);
 
 	LRESULT CreateControls(UINT Reason);
 	void CreateFonts(HWND Parent);

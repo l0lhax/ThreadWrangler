@@ -108,8 +108,8 @@ void WindowPConfig::CreateFonts(HWND Parent) {
 
 	DPI.GetDPI(Parent);
 
-	int fHeight = -MulDiv(9, GetDpiForWindow(_HWND), 72);
-	int fBHeight = -MulDiv(8, GetDpiForWindow(_HWND), 72);
+	int fHeight = DPI.ScaleFontHeight(9); 
+	int fBHeight = DPI.ScaleFontHeight(8); 
 
 	ReleaseFonts();
 
@@ -242,6 +242,31 @@ void WindowPConfig::ApplyConfiguration() {
 			Changes = true;
 		}
 
+		std::wstring SelectedText;
+		if (ControlHelpers::GetComboboxSelText(CB_CoresPerThread, SelectedText)) {
+
+			int32_t tCoresPerThread;
+
+			if (_wcsicmp(SelectedText.c_str(), L"Default") == 0) {
+				tCoresPerThread = 0;
+			}
+			else {
+				tCoresPerThread = _wtoi(SelectedText.c_str());
+			}
+
+			if (_TargetConfig->ProcessorsPerThread != tCoresPerThread) {
+				_TargetConfig->ProcessorsPerThread = tCoresPerThread;
+				Changes = true;
+			}
+		}
+		else {
+			if (_TargetConfig->ProcessorsPerThread != 0) {
+				_TargetConfig->ProcessorsPerThread = 0;
+				Changes = true;
+			}
+		}
+
+
 		_TargetConfig->ChangesPending = Changes;
 	}
 
@@ -331,9 +356,11 @@ void WindowPConfig::RestoreConfiguration() {
 
 		ControlHelpers::SetCheckboxState(CK_IdealThreadMode, _TargetConfig->IdealThreadMode);
 		ControlHelpers::SetCheckboxState(CK_AffinityMode, _TargetConfig->AffinityMode);
+		
+
 
 		SetSortAlgorithm(_TargetConfig->Algorithm);
-
+		SetCoresPerThread(_TargetConfig->ProcessorsPerThread);
 	}
 
 
@@ -457,28 +484,34 @@ LRESULT WindowPConfig::CreateControls(UINT Reason) {
 
 
 
-		GroupPtr bsGroup0 = tProcessorMap.GetGroup(0);
+		Processors::GroupPtr bsGroup0 = ProcessorInfo->GetGroup(0);
 		bsGroup0->RemoveProcessors();
 		for (int i = 0; i < testprocs; i++) {
-			ProcessorPtr tProcessor = bsGroup0->AddProcessor(i);
+			Processors::ProcessorPtr tProcessor = bsGroup0->AddProcessor(i);
 			if (i % 2 != 0) { tProcessor->SetFlag_HTCore(true, true); }
 		}
 
-		GroupPtr bsGroup1 = tProcessorMap.AddGroup(1);
+		Processors::GroupPtr bsGroup1 = ProcessorInfo->AddGroup(1);
 		bsGroup1->RemoveProcessors();
 		for (int i = 0; i < testprocs; i++) {
-			ProcessorPtr tProcessor = bsGroup1->AddProcessor(i);
+			Processors::ProcessorPtr tProcessor = bsGroup1->AddProcessor(i);
 			if (i % 2 != 0) { tProcessor->SetFlag_HTCore(true, true); }
 		}
 
-		GroupPtr bsGroup2 = tProcessorMap.AddGroup(2);
+		Processors::GroupPtr bsGroup2 = ProcessorInfo->AddGroup(2);
 		bsGroup2->RemoveProcessors();
 		for (int i = 0; i < testprocs; i++) {
-			ProcessorPtr tProcessor = bsGroup2->AddProcessor(i);
+			Processors::ProcessorPtr tProcessor = bsGroup2->AddProcessor(i);
 			if (i % 2 != 0) { tProcessor->SetFlag_HTCore(true, true); }
 		}
-		*/
-
+		
+		Processors::GroupPtr bsGroup3 = ProcessorInfo->AddGroup(3);
+		bsGroup3->RemoveProcessors();
+		for (int i = 0; i < testprocs; i++) {
+			Processors::ProcessorPtr tProcessor = bsGroup3->AddProcessor(i);
+			if (i % 2 != 0) { tProcessor->SetFlag_HTCore(true, true); }
+		}*/
+		
 		uint32_t ELeftOffset = 0;
 		uint32_t ETopOffset = 0;
 		uint32_t Colomn = 0;
@@ -486,6 +519,8 @@ LRESULT WindowPConfig::CreateControls(UINT Reason) {
 		uint32_t TopOffset = 0;
 		uint32_t LeftOffset = 0;
 		RECT rc = { 0 };
+
+		uint32_t MaxCores = 0;
 
 
 		for (Processors::GroupsIter git = ProcessorInfo->begin(); git != ProcessorInfo->end(); git++) {
@@ -495,6 +530,9 @@ LRESULT WindowPConfig::CreateControls(UINT Reason) {
 			tGroup.GroupID = Group->GetID();
 
 			uint32_t TotalCores = Group->GetProcessorCount();
+			if ((TotalCores > MaxCores) || (MaxCores == 0)) {
+				MaxCores = TotalCores;
+			}
 
 			uint32_t CoresPerColumn = TotalCores / 4;
 
@@ -597,20 +635,20 @@ LRESULT WindowPConfig::CreateControls(UINT Reason) {
 
 		uint32_t FormWidth = LeftOffset + 180;
 
-		ControlHelpers::ToRect(ELeftOffset + 10, ETopOffset + 4, LeftOffset + 144, 50, rc, DPI);
+		ControlHelpers::ToRect(ELeftOffset + 10, ETopOffset + 4, LeftOffset + 144, 78, rc, DPI);
 		HWND AlgGroup = ControlHelpers::CreateSingleControl(NULL, L"button", L"Thread Allocation Algorithm", WS_CHILD | WS_VISIBLE | BS_GROUPBOX, rc, _HWND, 0);
 		ControlHelpers::SetFont(AlgGroup, _HeaderFont);
 
 
 		if (FormWidth < 400) {
-			ControlHelpers::ToRect(ELeftOffset + 170, ETopOffset + 16, 95, 16, rc, DPI);
+			ControlHelpers::ToRect(ELeftOffset + 170, ETopOffset + 26, 119, 16, rc, DPI);
 			CK_IdealThreadMode = ControlHelpers::CreateSingleControl(NULL, L"button", L"Ideal Thread Mode", WS_VISIBLE | WS_CHILD | BS_CHECKBOX, rc, _HWND, 0);
 
-			ControlHelpers::ToRect(ELeftOffset + 170, ETopOffset + 32, 95, 16, rc, DPI);
+			ControlHelpers::ToRect(ELeftOffset + 170, ETopOffset + 48, 95, 16, rc, DPI);
 			CK_AffinityMode = ControlHelpers::CreateSingleControl(NULL, L"button", L"Affinity Mode", WS_VISIBLE | WS_CHILD | BS_CHECKBOX, rc, _HWND, 0);
 		}
 		else {
-			ControlHelpers::ToRect(ELeftOffset + 170, ETopOffset + 24, 116, 16, rc, DPI);
+			ControlHelpers::ToRect(ELeftOffset + 170, ETopOffset + 24, 119, 16, rc, DPI);
 			CK_IdealThreadMode = ControlHelpers::CreateSingleControl(NULL, L"button", L"Ideal Thread Mode", WS_VISIBLE | WS_CHILD | BS_CHECKBOX, rc, _HWND, 0);
 
 			ControlHelpers::ToRect(ELeftOffset + 300, ETopOffset + 24, 90, 16, rc, DPI);
@@ -634,21 +672,45 @@ LRESULT WindowPConfig::CreateControls(UINT Reason) {
 		SendMessage(CB_Algorithm, CB_ADDSTRING, (WPARAM)0, (LPARAM)L"User Time (Sticky)");
 		ControlHelpers::SetComboboxSelIndex(CB_Algorithm, 0);
 
+		ControlHelpers::ToRect(ELeftOffset + 18, ETopOffset + 50, 120, 16, rc, DPI); //MaxX - 210
+		CB_CoresPerThread = ControlHelpers::CreateSingleControl(NULL, L"combobox", L"", CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE, rc, _HWND, 0);
+		ControlHelpers::SetFont(CB_CoresPerThread, _DefaultFont);
+
+		SendMessage(CB_CoresPerThread, CB_ADDSTRING, (WPARAM)0, (LPARAM)L"Default");
+
+
+		for (uint32_t mc = 1; mc <= MaxCores; mc++) {
+			if (mc % 2 == 0) {
+				wchar_t tBuffer[16];
+				wsprintf(tBuffer, L"%u", mc);
+				SendMessage(CB_CoresPerThread, CB_ADDSTRING, (WPARAM)0, (LPARAM)tBuffer);
+			}
+		}
+
+		int cbcount = SendMessage(CB_CoresPerThread, CB_GETCOUNT, (WPARAM)0, (LPARAM)0);
+
+		ControlHelpers::SetComboboxSelIndex(CB_CoresPerThread, cbcount-1);
+
+
 		
-		ControlHelpers::ToRect((FormWidth / 2) - 40 - 80 - 5, ETopOffset + 63, 80, 20, rc, DPI); //MaxX - 210
+		ControlHelpers::ToRect((FormWidth / 2) - 40 - 80 - 5, ETopOffset + 93, 80, 20, rc, DPI); //MaxX - 210
 		BTN_OK = ControlHelpers::CreateSingleControl(NULL, L"button", L"OK",  WS_CHILD | WS_VISIBLE, rc, _HWND, 0);
 		ControlHelpers::SetFont(BTN_OK, _DefaultFont);
 
-		ControlHelpers::ToRect((FormWidth / 2) - 40, ETopOffset + 63, 80, 20, rc, DPI); //MaxX - 210
+		ControlHelpers::ToRect((FormWidth / 2) - 40, ETopOffset + 93, 80, 20, rc, DPI); //MaxX - 210
 		BTN_Cancel = ControlHelpers::CreateSingleControl(NULL, L"button", L"Cancel", WS_CHILD | WS_VISIBLE, rc, _HWND, 0);
 		ControlHelpers::SetFont(BTN_Cancel, _DefaultFont);
 
-		ControlHelpers::ToRect((FormWidth / 2) + 40 + 5, ETopOffset + 63, 80, 20, rc, DPI); //MaxX - 210
+		ControlHelpers::ToRect((FormWidth / 2) + 40 + 5, ETopOffset + 93, 80, 20, rc, DPI); //MaxX - 210
 		BTN_Revert = ControlHelpers::CreateSingleControl(NULL, L"button", L"Revert", WS_CHILD | WS_VISIBLE, rc, _HWND, 0);
 		ControlHelpers::SetFont(BTN_Revert, _DefaultFont);
 
 		if (_Parent != nullptr) {
-			ControlHelpers::ToRect(1, 1, LeftOffset + 180, ETopOffset + 128, rc, DPI);
+
+			int titleheight = (GetSystemMetrics(SM_CXSIZEFRAME) * 2) + GetSystemMetrics(SM_CYCAPTION);
+			titleheight = DPI.UnScaleValue(titleheight);
+
+			ControlHelpers::ToRect(1, 1, LeftOffset + 180, ETopOffset + 132 + titleheight, rc, DPI);
 			ControlHelpers::CenterWindowOnHWND(_Parent, _HWND, rc);
 		}
 
@@ -659,6 +721,23 @@ LRESULT WindowPConfig::CreateControls(UINT Reason) {
 	}
 
 	return 0;
+}
+
+void WindowPConfig::SetCoresPerThread(uint32_t CoresPerThread) {
+
+	if (CoresPerThread == 0) {
+		ControlHelpers::SetComboboxSelIndex(CB_CoresPerThread, 0);
+	}
+	else {
+		wchar_t Buffer[16];
+		_itow_s(CoresPerThread, Buffer, 16, 10);
+
+		int32_t tIndex = 0;
+		if (ControlHelpers::FindComboboxTextIndex(CB_CoresPerThread, Buffer, tIndex)) {
+			ControlHelpers::SetComboboxSelIndex(CB_CoresPerThread, tIndex);
+		}
+	}
+
 }
 
 void WindowPConfig::SetSortAlgorithm(Algorithms::TSAlgorithm ThreadSortAlg) {
@@ -757,4 +836,11 @@ WindowPConfig::WindowPConfig(HINSTANCE hInstance, HWND Parent) {
 	_DefaultFont = nullptr;
 	_Parent = Parent;
 	PendingDestroy = false;
+	CB_CoresPerThread = nullptr;
+	CB_Algorithm = nullptr;
+	CK_IdealThreadMode = nullptr;
+	CK_AffinityMode = nullptr;
+	BTN_OK = nullptr;
+	BTN_Cancel = nullptr;
+	BTN_Revert = nullptr;
 }

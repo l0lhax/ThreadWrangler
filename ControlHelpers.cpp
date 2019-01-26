@@ -53,6 +53,34 @@ bool ControlHelpers::SetComboboxSelIndex(HWND Control, int32_t SelectedIndex) {
 	return false;
 }
 
+bool ControlHelpers::FindComboboxTextIndex(HWND Control, std::wstring Text, int32_t & TextIndex) {
+
+	int32_t tIndex = (int32_t)SendMessage(Control, CB_FINDSTRINGEXACT, (WPARAM)1, (LPARAM)Text.c_str());
+	if (tIndex != CB_ERR) {
+		TextIndex = tIndex;
+		return true;
+	}
+
+	return false;
+
+}
+
+bool ControlHelpers::GetComboboxSelText(HWND Control, std::wstring & Buffer) {
+
+	int32_t CurrentIndex = 0;
+	if (GetComboboxSelIndex(Control, CurrentIndex)) {
+		int32_t Length = (int32_t)SendMessage(Control, CB_GETLBTEXTLEN, CurrentIndex, (LPARAM)0);
+		Buffer.resize(Length + 1);
+		wchar_t * tBuffer = &Buffer[0];
+		if (SendMessage(Control, CB_GETLBTEXT, CurrentIndex, (LPARAM)tBuffer) != CB_ERR) {
+			return true;
+		}
+	}
+
+	return false;
+
+}
+
 bool ControlHelpers::GetListboxSelIndex(HWND Control, int32_t & SelectedIndex) {
 	int32_t tSelectedIndex = (int32_t)SendMessage(Control, LB_GETCURSEL, (WPARAM)0, (LPARAM)0);
 	if (tSelectedIndex != LB_ERR)

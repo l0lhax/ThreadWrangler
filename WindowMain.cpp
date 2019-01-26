@@ -6,7 +6,6 @@
 #include <algorithm>
 #include "WindowPConfig.h"
 #include "Configuration.h"
-#include  <shobjidl_core.h>
 
 
 extern size_t counter1 = 0;
@@ -899,7 +898,8 @@ void WindowMain::ResizeSingleControl(HWND Control, RECT & rc) {
 void WindowMain::CreateFonts(HWND Parent) {
 	DPI.GetDPI(Parent);
 
-	int fHeight = -MulDiv(9, GetDpiForWindow(_HWND), 72);
+	//int fHeight = -MulDiv(9, GetDpiForWindow(_HWND), 72);
+	int fHeight = DPI.ScaleFontHeight(9);
 
 	ReleaseFonts();
 

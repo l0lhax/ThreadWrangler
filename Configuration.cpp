@@ -223,6 +223,11 @@ bool Config::Configuration::SaveConfiguration() {
 			}
 			tAttribute = static_cast<uint32_t>(tProcess->Algorithm);
 
+			if (!(tAttribute = AllocationModes.attribute(L"ProcessorsPerThread"))) {
+				tAttribute = AllocationModes.append_attribute(L"ProcessorsPerThread");
+			}
+			tAttribute = tProcess->ProcessorsPerThread;
+
 
 			if (tProcess->GetGroupCount() > 0) {
 				for (GroupConfigIter git = tProcess->group_begin(); git != tProcess->group_end(); ++git) {
@@ -382,6 +387,11 @@ bool Config::Configuration::LoadConfiguration() {
 				tAttribute = Control.attribute(L"Algorithm");
 				if (tAttribute) {
 					tProcessConfig->Algorithm = (Algorithms::TSAlgorithm)tAttribute.as_uint();
+				}
+
+				tAttribute = Control.attribute(L"ProcessorsPerThread");
+				if (tAttribute) {
+					tProcessConfig->ProcessorsPerThread = tAttribute.as_uint();
 				}
 
 			}

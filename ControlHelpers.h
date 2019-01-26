@@ -20,7 +20,8 @@ public:
 
 	static bool GetComboboxSelIndex(HWND Control, int32_t & SelectedIndex);
 	static bool SetComboboxSelIndex(HWND Control, int32_t SelectedIndex);
-
+	static bool GetComboboxSelText(HWND Control, std::wstring & Buffer);
+	static bool FindComboboxTextIndex(HWND Control, std::wstring Text, int32_t & TextIndex);
 
 	static bool SetListboxSelIndex(HWND Control, int32_t SelectedIndex);
 	static bool GetListboxSelIndex(HWND Control, int32_t & SelectedIndex);

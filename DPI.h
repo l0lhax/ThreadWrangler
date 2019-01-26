@@ -4,27 +4,38 @@
 #include <Windows.h>
 #include <ShellScalingApi.h>
 
+
 class ScaleHelper
 {
+private:
+
+	
+	typedef HRESULT(WINAPI* GetDPIForMonitor_t)(HMONITOR hmonitor, MONITOR_DPI_TYPE dpiType, UINT *dpiX, UINT *dpiY);
+	HMODULE Shcore;
+	GetDPIForMonitor_t getDPIForMonitor;
+
 public:
 	ScaleHelper()
 	{
-		m_nScaleFactor = 0;
+		m_nScaleFactorX = 0;
+		m_nScaleFactorY = 0;
+		Shcore = nullptr;
+		getDPIForMonitor = nullptr;
 	}
 
 	UINT GetScaleFactor()
 	{
-		return m_nScaleFactor;
+		return m_nScaleFactorX;
 	}
 
 	int32_t ScaleValue(int32_t value)
 	{
-		return MulDiv(value, m_nScaleFactor, 100);
+		return MulDiv(value, m_nScaleFactorX, 100);
 	}
 
 	int32_t UnScaleValue(int32_t value)
 	{
-		return MulDiv(value, 100, m_nScaleFactor);
+		return MulDiv(value, 100, m_nScaleFactorX);
 	}
 
 	// Scale rectangle from raw pixels to relative pixels.
@@ -51,25 +62,52 @@ public:
 		pPoint.y = ScaleValue(pPoint.y);
 	}
 
+	int ScaleFontHeight(int FontHeight) {
+		return -MulDiv(FontHeight, m_nScaleFactorY, 100);
+	}
+
 	void GetDPI(HWND Window) {
+			   
+		if (Shcore == nullptr)
+		{
+			Shcore = LoadLibrary(L"Shcore.dll");
+			getDPIForMonitor = Shcore ? (GetDPIForMonitor_t)GetProcAddress(Shcore, "GetDpiForMonitor") : nullptr;
+		}
+
 		UINT x = 0;
 		UINT y = 0;
 
-		HMONITOR monitor = MonitorFromWindow(Window, MONITOR_DEFAULTTONEAREST);
-		HRESULT Result = GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &x, &y);
+		if ((Shcore == nullptr) || (getDPIForMonitor == nullptr))
+		{
+			HDC tDC = GetDC(0);
+			x = GetDeviceCaps(tDC, LOGPIXELSX);
+			y = GetDeviceCaps(tDC, LOGPIXELSY);
+			ReleaseDC(0, tDC);
+		}
+		else {
+			HMONITOR monitor = MonitorFromWindow(Window, MONITOR_DEFAULTTONEAREST);
+			HRESULT Result = getDPIForMonitor(monitor, MDT_EFFECTIVE_DPI, &x, &y);
 
-		if (Result != S_OK) {
-			MessageBox(Window, L"Failed to determine DPI", L"Error", MB_OK);
-			return;
+			if (Result != S_OK) {
+				MessageBox(Window, L"Failed to determine DPI", L"Error", MB_OK);
+				return;
+			}
 		}
 
-		m_nScaleFactor = MulDiv(x, 100, 96);
+		m_nScaleFactorX = MulDiv(x, 100, 96);
+		m_nScaleFactorY = MulDiv(y, 100, 72);
+
+
+
 
 	}
 
 
 private:
-	UINT m_nScaleFactor;
+
+
+	UINT m_nScaleFactorX;
+	UINT m_nScaleFactorY;
 };
 
 #endif
